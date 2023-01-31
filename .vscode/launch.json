@@ -2,14 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
+      "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/mnt/c/users/noahh/downloads/umich22/eecs281/p2a-heap",
-      "program": "/mnt/c/users/noahh/downloads/umich22/eecs281/p2a-heap/build/Debug/outDebug",
+      "program": "/mnt/c/users/noahh/downloads/umich22/eecs281/p2a-heap/galaxy_debug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
