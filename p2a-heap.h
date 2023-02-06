@@ -47,29 +47,33 @@ public:
         int choice;
         int index = 0;
         option long_options[] = {
-            { "verbose",      no_argument,       nullptr, 'v' },
-            { "median",       no_argument,       nullptr, 'm' },
-            { "general-eval", no_argument,       nullptr, 'g' },
-            { "watcher",      no_argument,       nullptr, 'w' },
-            { nullptr,        0,                 nullptr, '\0'},
+            { "verbose",      no_argument, nullptr, 'v' },
+            { "median",       no_argument, nullptr, 'm' },
+            { "general-eval", no_argument, nullptr, 'g' },
+            { "watcher",      no_argument, nullptr, 'w' },
+            { nullptr,        0,           nullptr, '\0'},
         }; // long_options
 
         while((choice = getopt_long(argc, argv, "vmgw", long_options, &index)) != -1) {
             switch(choice) {
                 case 'v': {
                     modeVerb = true;
+                    break;
                 } // case 'v'
                 
                 case 'm' : {
                     modeMed = true;
+                    break;
                 } // case 'm'
 
                 case 'g': {
                     modeGen = true;
+                    break;
                 } // case 'g'
                 
                 case 'w': {
                     modeWatch = true;
+                    break;
                 } // case 'w'
 
                 default: {
