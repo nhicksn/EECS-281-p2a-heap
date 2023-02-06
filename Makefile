@@ -318,7 +318,7 @@ help:
 #class.o: class.cpp class.h
 #functions.o: functions.cpp functions.h
 #project0.o: project0.cpp class.h functions.h
-p2a-heap.o: p2a-heap.cpp p2a-heap.h
+p2a-heap.o: p2a-heap.cpp p2a-heap.h planet.h
 # THE COMPILER CAN GENERATE DEPENDENCIES FROM SOURCE CODE
 #
 # % g++ -std=c++17 -MM *.cpp
