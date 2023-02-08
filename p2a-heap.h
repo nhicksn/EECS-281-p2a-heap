@@ -40,7 +40,35 @@ private:
 
     // designed to be put in a while loop to read input before each round of simulations
     void readInputDL(const uint16_t &prevTime) {
-
+        // read input
+        char input;
+        std::string input2;
+        DepType side;
+        uint16_t timestamp, numGen, numPlan, numForce, numTroops;
+        std::cin >> timestamp >> input2 >> input >> numGen >> input >> numPlan >> input 
+                                                    >> numForce >> input >> numTroops;
+        if(input2 == "JEDI") { side = DepType::Jedi; }            
+        else { side = DepType::Sith; }
+        // check that input is possible
+        if(numPlan > numPlans || numPlan < 0) {
+            std::cerr << "invalid planet number\n";
+            exit(1);
+        }
+        else if (numGen > numGens || numGen < 0) {
+            std::cerr << "invalid general number\n";
+            exit(1);
+        }
+        else if(numForce <= 0 || numTroops <= 0) {
+            std::cerr << "invalid force sensitivity or troop quantity\n";
+            exit(1);
+        }
+        else if(timestamp < prevTime) {
+            std::cerr << "invalid timestamp\n";
+            exit(1);
+        }
+        // create troop with given characteristics
+        Deployment troop(timestamp, numGen, side, numForce, numTroops);
+        planets[numPlan].jedi.push(troop);
     }
 
 public:
@@ -98,6 +126,8 @@ public:
                                                     input >> arrivalRate;
         }
         std::cout << "Deploying troops...\n";
+        planets.resize(numPlans);
+        generals.resize(numGens);
     } // getMode
 
 };

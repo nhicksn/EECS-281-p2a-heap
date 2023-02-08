@@ -11,20 +11,15 @@ enum class DepType { Jedi, Sith };
 
 struct compareJedi {
     bool operator()(const Deployment &a, const Deployment &b) {
+        if(a.forceSens == b.forceSens) return a.timeStamp > b.timeStamp;
         return a.forceSens > b.forceSens;
     }
 };
 
 struct compareSith {
     bool operator()(const Deployment &a, const Deployment &b) {
+        if(a.forceSens == b.forceSens) return a.timeStamp > b.timeStamp;
         return a.forceSens < b.forceSens;
-    }
-};
-
-// idk if this is needed
-struct tieBreak {
-    bool operator()(const Deployment &a, const Deployment &b) {
-        return a.timeStamp > b.timeStamp;
     }
 };
 
@@ -40,11 +35,14 @@ struct Deployment {
     uint16_t forceSens;
     // might not need this
     uint16_t quantity;
+    Deployment(uint16_t t, uint16_t g, DepType s, uint16_t f, uint16_t q) : 
+                timeStamp(t), genID(g), side(s), forceSens(f), quantity(q) {}
 };
 
 class Planet {
-    std::priority_queue<Deployment> jedi;
-    std::priority_queue<Deployment> sith;
+public:
+    std::priority_queue<Deployment, compareJedi> jedi;
+    std::priority_queue<Deployment, compareSith> sith;
 
 };
 
