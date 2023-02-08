@@ -39,7 +39,7 @@ private:
 
     // designed to be put in a while loop to read input before each round of simulations
     // returns false if at the end of the input file
-    bool readInputDL(const uint16_t &prevTime) {
+    bool readInputDL(uint16_t &prevTime) {
         // read input
         uint16_t timestamp;
         if(!(std::cin >> timestamp)) return false;
@@ -61,11 +61,11 @@ private:
         uint16_t numGen = static_cast<uint16_t>(intNumGen);
 
         // check that input is possible
-        if(numPlan > numPlans) {
+        if(numPlan >= numPlans) {
             std::cerr << "invalid planet number\n";
             exit(1);
         }
-        else if (numGen > numGens) {
+        else if (numGen >= numGens) {
             std::cerr << "invalid general number\n";
             exit(1);
         }
@@ -88,6 +88,7 @@ private:
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
         }
+        prevTime = timestamp;
         return true;
     }
 
