@@ -5,7 +5,7 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "args": [],
+      "args": ["<", "spec-DL-in.txt"],
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/mnt/c/users/noahh/downloads/umich22/eecs281/p2a-heap",

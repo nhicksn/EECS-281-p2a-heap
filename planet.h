@@ -9,40 +9,41 @@ enum class State { Initial, SeenOne, SeenBoth };
 
 enum class DepType { Jedi, Sith };
 
-struct compareJedi {
-    bool operator()(const Deployment &a, const Deployment &b) {
-        if(a.forceSens == b.forceSens) return a.timeStamp > b.timeStamp;
-        return a.forceSens > b.forceSens;
-    }
-};
-
-struct compareSith {
-    bool operator()(const Deployment &a, const Deployment &b) {
-        if(a.forceSens == b.forceSens) return a.timeStamp > b.timeStamp;
-        return a.forceSens < b.forceSens;
-    }
-};
-
 struct General {
     uint16_t numTroops;
 };
 
 struct Deployment {
     // might not need this
-    uint16_t timeStamp;
+    uint16_t timeID;
     uint16_t genID;
     DepType side;
     uint16_t forceSens;
     // might not need this
     uint16_t quantity;
     Deployment(uint16_t t, uint16_t g, DepType s, uint16_t f, uint16_t q) : 
-                timeStamp(t), genID(g), side(s), forceSens(f), quantity(q) {}
+                timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
 };
+
+struct compareJedi {
+    bool operator()(const Deployment &a, const Deployment &b) {
+        if(a.forceSens == b.forceSens) return a.timeID > b.timeID;
+        return a.forceSens > b.forceSens;
+    }
+};
+
+struct compareSith {
+    bool operator()(const Deployment &a, const Deployment &b) {
+        if(a.forceSens == b.forceSens) return a.timeID > b.timeID;
+        return a.forceSens < b.forceSens;
+    }
+};
+
 
 class Planet {
 public:
-    std::priority_queue<Deployment, compareJedi> jedi;
-    std::priority_queue<Deployment, compareSith> sith;
+    std::priority_queue<Deployment, std::vector<Deployment>, compareJedi> jedi;
+    std::priority_queue<Deployment, std::vector<Deployment>, compareSith> sith;
 
 };
 
