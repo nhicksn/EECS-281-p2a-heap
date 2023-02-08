@@ -39,15 +39,17 @@ private:
     uint16_t arrivalRate;
 
     // designed to be put in a while loop to read input before each round of simulations
-    void readInputDL(const uint16_t &prevTime) {
+    // returns false if at the end of the input file
+    bool readInputDL(const uint16_t &prevTime) {
         // read input
-        char input;
-        std::string input2;
+        std::string inputString;
+        if(!(std::cin >> inputString)) return false;
         DepType side;
+        char inputChar;
         uint16_t timestamp, numGen, numPlan, numForce, numTroops;
-        std::cin >> timestamp >> input2 >> input >> numGen >> input >> numPlan >> input 
-                                                    >> numForce >> input >> numTroops;
-        if(input2 == "JEDI") { side = DepType::Jedi; }            
+        std::cin >> inputChar >> numGen >> inputChar >> numPlan >> inputChar 
+                                                    >> numForce >> inputChar >> numTroops;
+        if(inputString == "JEDI") { side = DepType::Jedi; }            
         else { side = DepType::Sith; }
         // check that input is possible
         if(numPlan > numPlans || numPlan < 0) {
@@ -66,9 +68,18 @@ private:
             std::cerr << "invalid timestamp\n";
             exit(1);
         }
-        // create troop with given characteristics
+        // create troop with given characteristics and push to correct queue
         Deployment troop(timestamp, numGen, side, numForce, numTroops);
-        planets[numPlan].jedi.push(troop);
+        if(side == DepType::Jedi) planets[numPlan].jedi.push(troop);
+        else planets[numPlan].sith.push(troop);
+        return true;
+    }
+
+    void runSim() {
+        uint16_t prevTime = 0;
+        while(readInputDL(prevTime)) {
+            
+        }
     }
 
 public:
