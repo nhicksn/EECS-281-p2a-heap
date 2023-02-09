@@ -10,17 +10,16 @@ enum class State { Initial, SeenOne, SeenBoth };
 enum class DepType { Jedi, Sith };
 
 struct General {
-    uint16_t totalTroops;
-    uint16_t aliveTroops;
+    uint16_t totalJedi;
+    uint16_t totalSith;
+    uint16_t totalDead;
 };
 
 struct Deployment {
-    // might not need this
     uint16_t timeID;
     uint16_t genID;
     DepType side;
     uint16_t forceSens;
-    // might not need this
     uint16_t quantity;
     Deployment(uint16_t t, uint16_t g, DepType s, uint16_t f, uint16_t q) : 
                 timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
@@ -40,12 +39,9 @@ struct compareSith {
     }
 };
 
-
-class Planet {
-public:
+struct Planet {
     std::priority_queue<Deployment, std::vector<Deployment>, compareJedi> jedi;
     std::priority_queue<Deployment, std::vector<Deployment>, compareSith> sith;
-
 };
 
 #endif

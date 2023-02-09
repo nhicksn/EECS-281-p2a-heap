@@ -83,40 +83,92 @@ private:
         if(side == DepType::Jedi) {
             Deployment dep(JediID++, numGen, side, numForce, numTroops);
             planets[numPlan].jedi.push(dep);
+            if(modeGen) { generals[numGen].totalJedi += numTroops; }
         }
         else {
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
-            
-        }
-        if(modeGen) {
-            generals[numGen].totalTroops += numTroops;
-            generals[numGen].aliveTroops += numTroops;
+            if(modeGen) {
+                generals[numGen].totalSith += numTroops;
+            }
         }
         prevTime = timestamp;
         return true;
     }
 
-    // called by runSim if mode is DL
+    // called by runSim if mode is DL // TODO:
     void runSimDL() {
         uint16_t prevTime = 0;
         uint16_t currentTime = 0;
         while(readInputDL(prevTime)) {
-            if(modeMed) {
-                if(currentTime != prevTime) {
+            if(modeMed && (currentTime != prevTime)) {
                 // print median information
                 currentTime = prevTime; // updates currentTime
+            }
+            for(size_t i = 0; i < planets.size(); i++) {
+                while(validBattle(i)) {
+                    uint16_t numTroopsJedi = planets[i].jedi.top().quantity;
+                    uint16_t numTroopsSith = planets[i].sith.top().quantity;
+                    if(numTroopsJedi > numTroopsSith) {
+                        planets[i].sith.pop();
+                        // top() returns const reference, so you can't modify the quantity
+                        // there has to be a better way to do this though
+                        Deployment temp = planets[i].jedi.top();
+                        temp.quantity -= numTroopsSith;
+                        planets[i].jedi.pop();
+                        planets[i].jedi.push(temp);
+                    }
+                    else if(numTroopsJedi < numTroopsSith) {
+                        planets[i].jedi.pop();
+                        // top() returns const reference, so you can't modify the quantity
+                        // there has to be a better way to do this though
+                        Deployment temp = planets[i].sith.top();
+                        temp.quantity -= numTroopsJedi;
+                        planets[i].sith.pop();
+                        planets[i].sith.push(temp);
+                        planets[i].sith;
+                    }
+                    else {
+                        planets[i].jedi.pop();
+                        planets[i].sith.pop();
+                    }
+                    numBattles++;
                 }
             }
         }
     }
 
-    // called by runSim if mode is PR
+    // called by runSim if mode is PR // TODO:
     void runSimPR() {
 
     }
 
-    
+    // called by runSimDL to check if there is a valid battle
+    bool validBattle(size_t i) {
+        // makes sure that neither pq is empty
+        if(planets[i].sith.empty() || planets[i].jedi.empty()) {
+            return false;
+        }
+        if(planets[i].sith.top().forceSens > planets[i].jedi.top().forceSens) {
+            return true;
+        }
+        return false;
+    }
+
+    // used by runSim if modeMed is enabled // TODO:
+    void printMedian() {
+
+    }
+
+    // used by runSim if modeGen is enabled // TODO:
+    void printGen() {
+
+    }
+
+    // used by runSim if modeWatch is enabled // TODO:
+    void printWatch() {
+
+    }
 
 public:
     void getMode(const int &argc, char *argv[]) {
@@ -189,6 +241,7 @@ public:
         else {
             runSimPR();
         }
+        std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
     }
 };
 
