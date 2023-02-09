@@ -10,7 +10,8 @@ enum class State { Initial, SeenOne, SeenBoth };
 enum class DepType { Jedi, Sith };
 
 struct General {
-    uint16_t numTroops;
+    uint16_t totalTroops;
+    uint16_t aliveTroops;
 };
 
 struct Deployment {

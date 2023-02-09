@@ -87,7 +87,10 @@ private:
         else {
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
+            
         }
+        generals[numGen].totalTroops += numTroops;
+        generals[numGen].aliveTroops += numTroops;
         prevTime = timestamp;
         return true;
     }
@@ -178,7 +181,6 @@ public:
         else {
             runSimPR();
         }
-        
     }
 };
 
