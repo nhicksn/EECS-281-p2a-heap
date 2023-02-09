@@ -89,8 +89,10 @@ private:
             planets[numPlan].sith.push(dep);
             
         }
-        generals[numGen].totalTroops += numTroops;
-        generals[numGen].aliveTroops += numTroops;
+        if(modeGen) {
+            generals[numGen].totalTroops += numTroops;
+            generals[numGen].aliveTroops += numTroops;
+        }
         prevTime = timestamp;
         return true;
     }
@@ -98,8 +100,14 @@ private:
     // called by runSim if mode is DL
     void runSimDL() {
         uint16_t prevTime = 0;
+        uint16_t currentTime = 0;
         while(readInputDL(prevTime)) {
-            
+            if(modeMed) {
+                if(currentTime != prevTime) {
+                // print median information
+                currentTime = prevTime; // updates currentTime
+                }
+            }
         }
     }
 
