@@ -10,18 +10,18 @@ enum class State { Initial, SeenOne, SeenBoth };
 enum class DepType { Jedi, Sith };
 
 struct General {
-    uint16_t totalJedi;
-    uint16_t totalSith;
-    uint16_t totalDead;
+    uint32_t totalJedi;
+    uint32_t totalSith;
+    uint32_t totalAlive;
 };
 
 struct Deployment {
-    uint16_t timeID;
-    uint16_t genID;
+    uint32_t timeID;
+    uint32_t genID;
     DepType side;
-    uint16_t forceSens;
-    uint16_t quantity;
-    Deployment(uint16_t t, uint16_t g, DepType s, uint16_t f, uint16_t q) : 
+    uint32_t forceSens;
+    uint32_t quantity;
+    Deployment(uint32_t t, uint32_t g, DepType s, uint32_t f, uint32_t q) : 
                 timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
 };
 

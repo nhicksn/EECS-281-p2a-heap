@@ -34,17 +34,17 @@ private:
     uint32_t arrivalRate;
     //
     
-    uint16_t JediID = 0; // to break ties
-    uint16_t SithID = 0; // to break ties
+    uint32_t JediID = 0; // to break ties
+    uint32_t SithID = 0; // to break ties
 
     // designed to be put in a while loop to read input before each round of simulations
     // returns false if at the end of the input file
-    bool readInputDL(uint16_t &prevTime) {
+    bool readInputDL(uint32_t &prevTime) {
         // read input
-        uint16_t timestamp;
+        uint32_t timestamp;
         if(!(std::cin >> timestamp)) return false;
         std::string inputString;
-        DepType side; char inputChar; uint16_t numForce, numTroops; 
+        DepType side; char inputChar; uint32_t numForce, numTroops; 
         int intNumGen, intNumPlan;
         std::cin >> inputString >> inputChar >> intNumGen >> inputChar >> intNumPlan 
                                 >> inputChar >> numForce >> inputChar >> numTroops;
@@ -57,8 +57,8 @@ private:
             exit(1);
         }
 
-        uint16_t numPlan = static_cast<uint16_t>(intNumPlan);
-        uint16_t numGen = static_cast<uint16_t>(intNumGen);
+        uint32_t numPlan = static_cast<uint32_t>(intNumPlan);
+        uint32_t numGen = static_cast<uint32_t>(intNumGen);
 
         // check that input is possible
         if(numPlan >= numPlans) {
@@ -83,13 +83,17 @@ private:
         if(side == DepType::Jedi) {
             Deployment dep(JediID++, numGen, side, numForce, numTroops);
             planets[numPlan].jedi.push(dep);
-            if(modeGen) { generals[numGen].totalJedi += numTroops; }
+            if(modeGen) { 
+                generals[numGen].totalJedi += numTroops;
+                generals[numGen].totalAlive += numTroops;
+            }
         }
         else {
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
             if(modeGen) {
                 generals[numGen].totalSith += numTroops;
+                generals[numGen].totalAlive += numTroops;
             }
         }
         prevTime = timestamp;
@@ -98,8 +102,8 @@ private:
 
     // called by runSim if mode is DL // TODO:
     void runSimDL() {
-        uint16_t prevTime = 0;
-        uint16_t currentTime = 0;
+        uint32_t prevTime = 0;
+        uint32_t currentTime = 0;
         while(readInputDL(prevTime)) {
             if(modeMed && (currentTime != prevTime)) {
                 // print median information
@@ -107,28 +111,47 @@ private:
             }
             for(size_t i = 0; i < planets.size(); i++) {
                 while(validBattle(i)) {
-                    uint16_t numTroopsJedi = planets[i].jedi.top().quantity;
-                    uint16_t numTroopsSith = planets[i].sith.top().quantity;
+                    uint32_t numTroopsJedi = planets[i].jedi.top().quantity;
+                    uint32_t numTroopsSith = planets[i].sith.top().quantity;
                     if(numTroopsJedi > numTroopsSith) {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsSith * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsSith;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsSith;
+                        }
                         planets[i].sith.pop();
-                        // top() returns const reference, so you can't modify the quantity
-                        // there has to be a better way to do this though
                         Deployment temp = planets[i].jedi.top();
                         temp.quantity -= numTroopsSith;
                         planets[i].jedi.pop();
                         planets[i].jedi.push(temp);
                     }
                     else if(numTroopsJedi < numTroopsSith) {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
+                        }
                         planets[i].jedi.pop();
-                        // top() returns const reference, so you can't modify the quantity
-                        // there has to be a better way to do this though
                         Deployment temp = planets[i].sith.top();
                         temp.quantity -= numTroopsJedi;
                         planets[i].sith.pop();
                         planets[i].sith.push(temp);
-                        planets[i].sith;
                     }
                     else {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
+                        }
                         planets[i].jedi.pop();
                         planets[i].sith.pop();
                     }
@@ -149,10 +172,15 @@ private:
         if(planets[i].sith.empty() || planets[i].jedi.empty()) {
             return false;
         }
-        if(planets[i].sith.top().forceSens > planets[i].jedi.top().forceSens) {
+        if(planets[i].sith.top().forceSens >= planets[i].jedi.top().forceSens) {
             return true;
         }
         return false;
+    }
+
+    void printVerbose(uint32_t gen1, uint32_t gen2, size_t plan, uint32_t troops) {
+        std::cout << "General " << gen1 << "'s battalion attacked General " << gen2 << 
+            "'s battalion on planet " << plan << ". " << troops << " troops were lost.\n";
     }
 
     // used by runSim if modeMed is enabled // TODO:
@@ -162,7 +190,13 @@ private:
 
     // used by runSim if modeGen is enabled // TODO:
     void printGen() {
-
+        std::cout << "---General Evaluation---\n";
+        for(size_t i = 0; i < numGens; i++) {
+            uint32_t totalTroops = generals[i].totalJedi + generals[i].totalSith;
+            std::cout << "General " << i << " deployed " << generals[i].totalJedi << 
+                   " Jedi troops and " << generals[i].totalSith << " Sith troops, and " << 
+                   generals[i].totalAlive << "/" << totalTroops << " troops survived.\n";
+        }
     }
 
     // used by runSim if modeWatch is enabled // TODO:
@@ -170,7 +204,19 @@ private:
 
     }
 
+    void printSummary() {
+        std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
+        if(modeGen) {
+            printGen();
+        }
+    }
+    
 public:
+    
+    Galaxy(const int &argc, char *argv[]) {
+        getMode(argc, argv);
+    }
+
     void getMode(const int &argc, char *argv[]) {
         opterr = false;
         int choice;
@@ -231,7 +277,8 @@ public:
 
         std::cout << "Deploying troops...\n";
         planets.resize(numPlans);
-        generals.resize(numGens);
+        if(modeGen) { generals.resize(numGens); }
+        
     } // getMode
 
     void runSim() {
@@ -241,7 +288,7 @@ public:
         else {
             runSimPR();
         }
-        std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
+        printSummary();
     }
 };
 

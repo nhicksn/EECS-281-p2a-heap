@@ -4,7 +4,6 @@
 
 int main(int argc, char *argv[]) {
     std::ios::sync_with_stdio(false);
-    Galaxy g;
-    g.getMode(argc, argv);
+    Galaxy g(argc, argv);
     g.runSim();
 }
