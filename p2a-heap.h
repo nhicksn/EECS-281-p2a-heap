@@ -100,13 +100,13 @@ private:
         return true;
     }
 
-    // called by runSim if mode is DL // TODO:
+    // called by runSim if mode is DL
     void runSimDL() {
         uint32_t prevTime = 0;
         uint32_t currentTime = 0;
         while(readInputDL(prevTime)) {
             if(modeMed && (currentTime != prevTime)) {
-                // print median information
+                printMedian();
                 currentTime = prevTime; // updates currentTime
             }
             for(size_t i = 0; i < planets.size(); i++) {
@@ -188,7 +188,7 @@ private:
 
     }
 
-    // used by runSim if modeGen is enabled // TODO:
+    // used by runSim if modeGen is enabled
     void printGen() {
         std::cout << "---General Evaluation---\n";
         for(size_t i = 0; i < numGens; i++) {
@@ -199,7 +199,7 @@ private:
         }
     }
 
-    // used by runSim if modeWatch is enabled // TODO:
+    // used by printSummary if modeWatch is enabled // TODO:
     void printWatch() {
 
     }
