@@ -4,7 +4,9 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <sstream>
 #include "planet.h"
+#include "P2random.h"
 
 // for movie watcher mode:
     // remember best jedis time and force
@@ -14,6 +16,7 @@
 
 class Galaxy {
 private:
+
     bool modeVerb = false; // verbose toggle
     bool modeMed = false; // running median toggle
     bool modeGen = false; // general-eval toggle
@@ -38,15 +41,15 @@ private:
     uint32_t SithID = 0; // to break ties
 
     // designed to be put in a while loop to read input before each round of simulations
-    // returns false if at the end of the input file
-    bool readInputDL(uint32_t &prevTime) {
+    // returns false if no more input
+    bool readInput(std::istream &input, uint32_t &prevTime) {
         // read input
         uint32_t timestamp;
-        if(!(std::cin >> timestamp)) return false;
+        if(!(input >> timestamp)) return false;
         std::string inputString;
         DepType side; char inputChar; uint32_t numForce, numTroops; 
         int intNumGen, intNumPlan;
-        std::cin >> inputString >> inputChar >> intNumGen >> inputChar >> intNumPlan 
+        input >> inputString >> inputChar >> intNumGen >> inputChar >> intNumPlan 
                                 >> inputChar >> numForce >> inputChar >> numTroops;
         if(inputString == "JEDI") { side = DepType::Jedi; }            
         else { side = DepType::Sith; }
@@ -96,77 +99,13 @@ private:
                 generals[numGen].totalAlive += numTroops;
             }
         }
+        //
+
         prevTime = timestamp;
         return true;
     }
 
-    // called by runSim if mode is DL
-    void runSimDL() {
-        uint32_t prevTime = 0;
-        uint32_t currentTime = 0;
-        while(readInputDL(prevTime)) {
-            if(modeMed && (currentTime != prevTime)) {
-                printMedian();
-                currentTime = prevTime; // updates currentTime
-            }
-            for(size_t i = 0; i < planets.size(); i++) {
-                while(validBattle(i)) {
-                    uint32_t numTroopsJedi = planets[i].jedi.top().quantity;
-                    uint32_t numTroopsSith = planets[i].sith.top().quantity;
-                    if(numTroopsJedi > numTroopsSith) {
-                        if(modeVerb) {
-                            printVerbose(planets[i].sith.top().genID, 
-                            planets[i].jedi.top().genID, i, numTroopsSith * 2);
-                        }
-                        if(modeGen) {
-                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsSith;
-                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsSith;
-                        }
-                        planets[i].sith.pop();
-                        Deployment temp = planets[i].jedi.top();
-                        temp.quantity -= numTroopsSith;
-                        planets[i].jedi.pop();
-                        planets[i].jedi.push(temp);
-                    }
-                    else if(numTroopsJedi < numTroopsSith) {
-                        if(modeVerb) {
-                            printVerbose(planets[i].sith.top().genID, 
-                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
-                        }
-                        if(modeGen) {
-                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
-                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
-                        }
-                        planets[i].jedi.pop();
-                        Deployment temp = planets[i].sith.top();
-                        temp.quantity -= numTroopsJedi;
-                        planets[i].sith.pop();
-                        planets[i].sith.push(temp);
-                    }
-                    else {
-                        if(modeVerb) {
-                            printVerbose(planets[i].sith.top().genID, 
-                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
-                        }
-                        if(modeGen) {
-                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
-                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
-                        }
-                        planets[i].jedi.pop();
-                        planets[i].sith.pop();
-                    }
-                    numBattles++;
-                }
-            }
-        }
-    }
-
-    // called by runSim if mode is PR // TODO:
-    void runSimPR() {
-
-    }
-
-    // called by runSimDL to check if there is a valid battle
+    // called by runSim to check if there is a valid battle
     bool validBattle(size_t i) {
         // makes sure that neither pq is empty
         if(planets[i].sith.empty() || planets[i].jedi.empty()) {
@@ -178,6 +117,7 @@ private:
         return false;
     }
 
+    // used by runSim if modeVerb is enabled
     void printVerbose(uint32_t gen1, uint32_t gen2, size_t plan, uint32_t troops) {
         std::cout << "General " << gen1 << "'s battalion attacked General " << gen2 << 
             "'s battalion on planet " << plan << ". " << troops << " troops were lost.\n";
@@ -186,6 +126,19 @@ private:
     // used by runSim if modeMed is enabled // TODO:
     void printMedian() {
 
+    }
+
+    // used by printSummary if modeWatch is enabled // TODO:
+    void printWatch() {
+
+    }
+
+    // prints all info at the end of the program
+    void printSummary() {
+        std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
+        if(modeGen) {
+            printGen();
+        }
     }
 
     // used by runSim if modeGen is enabled
@@ -197,24 +150,6 @@ private:
                    " Jedi troops and " << generals[i].totalSith << " Sith troops, and " << 
                    generals[i].totalAlive << "/" << totalTroops << " troops survived.\n";
         }
-    }
-
-    // used by printSummary if modeWatch is enabled // TODO:
-    void printWatch() {
-
-    }
-
-    void printSummary() {
-        std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
-        if(modeGen) {
-            printGen();
-        }
-    }
-    
-public:
-    
-    Galaxy(const int &argc, char *argv[]) {
-        getMode(argc, argv);
     }
 
     void getMode(const int &argc, char *argv[]) {
@@ -274,22 +209,88 @@ public:
             std::cin >> input >> randomSeed >> input >> numDeployments >> 
                                                     input >> arrivalRate;
         }
+        //
 
         std::cout << "Deploying troops...\n";
         planets.resize(numPlans);
         if(modeGen) { generals.resize(numGens); }
         
     } // getMode
-
+    
+public:
+    
+    Galaxy(const int &argc, char *argv[]) {
+        getMode(argc, argv);
+    }
+    
+    // used by user to run the simulation
+    // handles DL and PR input mode
     void runSim() {
-        if(modeDL) {
-            runSimDL();
+        std::stringstream ss;
+        if(!modeDL) {
+            P2random::PR_init(ss, randomSeed, numGens, numPlans, numDeployments, arrivalRate);
         }
-        else {
-            runSimPR();
+        std::istream &inputStream = !modeDL ? ss : std::cin;
+        uint32_t prevTime = 0;
+        uint32_t currentTime = 0;
+        while(readInput(inputStream, prevTime)) {
+            if(modeMed && (currentTime != prevTime)) {
+                printMedian();
+                currentTime = prevTime; // updates currentTime
+            }
+            for(size_t i = 0; i < planets.size(); i++) {
+                while(validBattle(i)) {
+                    uint32_t numTroopsJedi = planets[i].jedi.top().quantity;
+                    uint32_t numTroopsSith = planets[i].sith.top().quantity;
+                    if(numTroopsJedi > numTroopsSith) {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsSith * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsSith;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsSith;
+                        }
+                        planets[i].sith.pop();
+                        Deployment temp = planets[i].jedi.top();
+                        temp.quantity -= numTroopsSith;
+                        planets[i].jedi.pop();
+                        planets[i].jedi.push(temp);
+                    }
+                    else if(numTroopsJedi < numTroopsSith) {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
+                        }
+                        planets[i].jedi.pop();
+                        Deployment temp = planets[i].sith.top();
+                        temp.quantity -= numTroopsJedi;
+                        planets[i].sith.pop();
+                        planets[i].sith.push(temp);
+                    }
+                    else {
+                        if(modeVerb) {
+                            printVerbose(planets[i].sith.top().genID, 
+                            planets[i].jedi.top().genID, i, numTroopsJedi * 2);
+                        }
+                        if(modeGen) {
+                            generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
+                            generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
+                        }
+                        planets[i].jedi.pop();
+                        planets[i].sith.pop();
+                    }
+                    numBattles++;
+                }
+            }
         }
         printSummary();
     }
+
 };
 
 #endif
