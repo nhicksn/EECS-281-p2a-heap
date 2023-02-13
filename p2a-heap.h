@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <sstream>
+#include <queue>
 #include "planet.h"
 #include "P2random.h"
 
@@ -36,9 +37,16 @@ private:
     uint32_t numDeployments;
     uint32_t arrivalRate;
     //
-    
-    uint32_t JediID = 0; // to break ties
-    uint32_t SithID = 0; // to break ties
+
+    // vector of priority queues for the median
+    std::vector<std::priority_queue<uint32_t, std::vector<uint32_t>, std::greater<uint32_t>>> upper;
+    std::vector<std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>>> lower;
+    //
+
+    // to break ties
+    uint32_t JediID = 0;
+    uint32_t SithID = 0;
+    //
 
     // designed to be put in a while loop to read input before each round of simulations
     // returns false if no more input
@@ -105,7 +113,7 @@ private:
         return true;
     }
 
-    // called by runSim to check if there is a valid battle
+    // used by runSim to check if there is a valid battle
     bool validBattle(size_t i) {
         // makes sure that neither pq is empty
         if(planets[i].sith.empty() || planets[i].jedi.empty()) {
@@ -123,14 +131,19 @@ private:
             "'s battalion on planet " << plan << ". " << troops << " troops were lost.\n";
     }
 
-    // used by runSim if modeMed is enabled // TODO:
-    void printMedian() {
+    // used by runSim to see if best fight needs to be updated // TODO:
+    void evaluateWatch() {
 
     }
 
-    // used by printSummary if modeWatch is enabled // TODO:
-    void printWatch() {
-
+    // used by runSim if modeMed is enabled
+    void printMedian(uint32_t time) {
+        for(uint32_t i = 0; i < numPlans; i++) {
+            if(upper[i].size() > 0 || lower[i].size() > 0) {
+                std::cout << "Median troops lost on planet " << i << " at time " << time 
+                    << " is " << calcMedian(i) << '\n';
+            }
+        }
     }
 
     // prints all info at the end of the program
@@ -139,9 +152,12 @@ private:
         if(modeGen) {
             printGen();
         }
+        if(modeWatch) {
+            printWatch();
+        }
     }
 
-    // used by runSim if modeGen is enabled
+    // used by printSummary if modeGen is enabled
     void printGen() {
         std::cout << "---General Evaluation---\n";
         for(size_t i = 0; i < numGens; i++) {
@@ -149,6 +165,37 @@ private:
             std::cout << "General " << i << " deployed " << generals[i].totalJedi << 
                    " Jedi troops and " << generals[i].totalSith << " Sith troops, and " << 
                    generals[i].totalAlive << "/" << totalTroops << " troops survived.\n";
+        }
+    }
+    
+    // used by printSummary if modeWatch is enabled // TODO:
+    void printWatch() {
+
+    }
+
+    void pqPush(uint32_t planNum, uint32_t numTroops) {
+        if(upper[planNum].size() == 0 || numTroops >= upper[planNum].top()) { upper[planNum].push(numTroops); }
+        else { lower[planNum].push(numTroops); }
+
+        if(upper[planNum].size() == (lower[planNum].size() + 2)) {
+            lower[planNum].push(upper[planNum].top());
+            upper[planNum].pop();
+        }
+        else if((upper[planNum].size() + 2) == lower[planNum].size()) {
+            upper[planNum].push(lower[planNum].top());
+            lower[planNum].pop();
+        }
+    }
+
+    int calcMedian(uint32_t planNum) {
+        if(upper[planNum].size() == lower[planNum].size()) {
+            return (upper[planNum].top() + lower[planNum].top())/2;
+        }
+        else if(upper[planNum].size() > lower[planNum].size()) {
+            return upper[planNum].top();
+        }
+        else {
+            return lower[planNum].top();
         }
     }
 
@@ -214,6 +261,10 @@ private:
         std::cout << "Deploying troops...\n";
         planets.resize(numPlans);
         if(modeGen) { generals.resize(numGens); }
+        if(modeMed) { 
+            upper.resize(numPlans);
+            lower.resize(numPlans);
+        }
         
     } // getMode
     
@@ -235,10 +286,10 @@ public:
         uint32_t currentTime = 0;
         while(readInput(inputStream, prevTime)) {
             if(modeMed && (currentTime != prevTime)) {
-                printMedian();
+                printMedian(currentTime);
                 currentTime = prevTime; // updates currentTime
             }
-            for(size_t i = 0; i < planets.size(); i++) {
+            for(uint32_t i = 0; i < planets.size(); i++) {
                 while(validBattle(i)) {
                     uint32_t numTroopsJedi = planets[i].jedi.top().quantity;
                     uint32_t numTroopsSith = planets[i].sith.top().quantity;
@@ -250,6 +301,9 @@ public:
                         if(modeGen) {
                             generals[planets[i].jedi.top().genID].totalAlive -= numTroopsSith;
                             generals[planets[i].sith.top().genID].totalAlive -= numTroopsSith;
+                        }
+                        if(modeMed) {
+                            pqPush(i, numTroopsSith*2);
                         }
                         planets[i].sith.pop();
                         Deployment temp = planets[i].jedi.top();
@@ -266,6 +320,9 @@ public:
                             generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
                             generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
                         }
+                        if(modeMed) {
+                            pqPush(i, numTroopsJedi*2);
+                        }
                         planets[i].jedi.pop();
                         Deployment temp = planets[i].sith.top();
                         temp.quantity -= numTroopsJedi;
@@ -281,12 +338,18 @@ public:
                             generals[planets[i].jedi.top().genID].totalAlive -= numTroopsJedi;
                             generals[planets[i].sith.top().genID].totalAlive -= numTroopsJedi;
                         }
+                        if(modeMed) {
+                            pqPush(i, numTroopsJedi*2);
+                        }
                         planets[i].jedi.pop();
                         planets[i].sith.pop();
                     }
                     numBattles++;
                 }
             }
+        }
+        if(modeMed) {
+            printMedian(prevTime);
         }
         printSummary();
     }
