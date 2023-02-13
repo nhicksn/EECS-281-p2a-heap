@@ -91,7 +91,7 @@ private:
         //
 
         // create troop with given characteristics and push to correct queue
-        if(side == DepType::Jedi) {
+        if(side == DepType::Jedi) { // if Jedi
             Deployment dep(JediID++, numGen, side, numForce, numTroops);
             planets[numPlan].jedi.push(dep);
             if(modeGen) { 
@@ -99,7 +99,7 @@ private:
                 generals[numGen].totalAlive += numTroops;
             }
         }
-        else {
+        else { // if Sith
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
             if(modeGen) {
@@ -170,7 +170,14 @@ private:
     
     // used by printSummary if modeWatch is enabled // TODO:
     void printWatch() {
-
+        std::cout << "---Movie Watcher---\n";
+        for(uint32_t i = 0; i < numPlans; i++) {
+            // check if there are any exciting battles, and cout if necessary
+            //
+            // find a way to store the most exciting battles, so that you can check 
+            // if the vector is empty, there are no exciting battles
+            //
+        }
     }
 
     void pqPush(uint32_t planNum, uint32_t numTroops) {
