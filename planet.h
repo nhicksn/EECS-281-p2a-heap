@@ -23,6 +23,7 @@ struct Deployment {
     uint32_t quantity;
     Deployment(uint32_t t, uint32_t g, DepType s, uint32_t f, uint32_t q) : 
                 timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
+    Deployment() : timeID(0), genID(0), side(DepType::Jedi), forceSens(0), quantity(0) {}
 };
 
 struct compareJedi {

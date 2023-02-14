@@ -43,6 +43,11 @@ private:
     std::vector<std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>>> lower;
     //
 
+    // status of movie watcher
+    State ambush = State::Initial;
+    State attack = State::Initial;
+    //
+
     // to break ties
     uint32_t JediID = 0;
     uint32_t SithID = 0;
@@ -50,7 +55,7 @@ private:
 
     // designed to be put in a while loop to read input before each round of simulations
     // returns false if no more input
-    bool readInput(std::istream &input, uint32_t &prevTime) {
+    bool readInput(std::istream &input, uint32_t &prevTime, Deployment &depOut) {
         // read input
         uint32_t timestamp;
         if(!(input >> timestamp)) return false;
@@ -61,17 +66,15 @@ private:
                                 >> inputChar >> numForce >> inputChar >> numTroops;
         if(inputString == "JEDI") { side = DepType::Jedi; }            
         else { side = DepType::Sith; }
-        //
+        // read input
 
+        // check that input is possible
         if(intNumPlan < 0 || intNumGen < 0) {
             std::cerr << "negative planet or general number given\n";
             exit(1);
         }
-
         uint32_t numPlan = static_cast<uint32_t>(intNumPlan);
         uint32_t numGen = static_cast<uint32_t>(intNumGen);
-
-        // check that input is possible
         if(numPlan >= numPlans) {
             std::cerr << "invalid planet number\n";
             exit(1);
@@ -88,12 +91,13 @@ private:
             std::cerr << "invalid timestamp\n";
             exit(1);
         }
-        //
+        // check that input is possible
 
         // create troop with given characteristics and push to correct queue
         if(side == DepType::Jedi) { // if Jedi
             Deployment dep(JediID++, numGen, side, numForce, numTroops);
             planets[numPlan].jedi.push(dep);
+            depOut = dep;
             if(modeGen) { 
                 generals[numGen].totalJedi += numTroops;
                 generals[numGen].totalAlive += numTroops;
@@ -102,12 +106,13 @@ private:
         else { // if Sith
             Deployment dep(SithID++, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
+            depOut = dep;
             if(modeGen) {
                 generals[numGen].totalSith += numTroops;
                 generals[numGen].totalAlive += numTroops;
             }
         }
-        //
+        // create troop with given characteristics and push to correct queue
 
         prevTime = timestamp;
         return true;
@@ -115,10 +120,11 @@ private:
 
     // used by runSim to check if there is a valid battle
     bool validBattle(size_t i) {
-        // makes sure that neither pq is empty
+        // make sure that neither pq is empty
         if(planets[i].sith.empty() || planets[i].jedi.empty()) {
             return false;
         }
+        // make sure there is a sith with higher forceSens than a jedi
         if(planets[i].sith.top().forceSens >= planets[i].jedi.top().forceSens) {
             return true;
         }
@@ -131,12 +137,17 @@ private:
             "'s battalion on planet " << plan << ". " << troops << " troops were lost.\n";
     }
 
-    // used by runSim to see if best fight needs to be updated // TODO:
-    void evaluateWatch() {
-
+    // used by runSim to see if best ambush needs to be updated
+    void evaluateAmbush(Deployment &dep) {
+        // TODO:
     }
 
-    // used by runSim if modeMed is enabled
+    // used by runSim to see if best attack needs to be updated
+    void evaluateAttack(Deployment &dep) {
+        // TODO:
+    }
+
+    // used by runSim if modeMed, prints the median data for the inputted timestamp
     void printMedian(uint32_t time) {
         for(uint32_t i = 0; i < numPlans; i++) {
             if(upper[i].size() > 0 || lower[i].size() > 0) {
@@ -146,7 +157,7 @@ private:
         }
     }
 
-    // prints all info at the end of the program
+    // prints all necessary info at the end of the program
     void printSummary() {
         std::cout << "---End of Day---\n" << "Battles: " << numBattles << '\n';
         if(modeGen) {
@@ -157,7 +168,7 @@ private:
         }
     }
 
-    // used by printSummary if modeGen is enabled
+    // used by printSummary if modeGen is enabled, prints the general data
     void printGen() {
         std::cout << "---General Evaluation---\n";
         for(size_t i = 0; i < numGens; i++) {
@@ -168,9 +179,10 @@ private:
         }
     }
     
-    // used by printSummary if modeWatch is enabled // TODO:
+    // used by printSummary if modeWatch is enabled, prints the movie watcher data
     void printWatch() {
         std::cout << "---Movie Watcher---\n";
+        // TODO:
         for(uint32_t i = 0; i < numPlans; i++) {
             // check if there are any exciting battles, and cout if necessary
             //
@@ -180,6 +192,7 @@ private:
         }
     }
 
+    // used for modeMed
     void pqPush(uint32_t planNum, uint32_t numTroops) {
         if(upper[planNum].size() == 0 || numTroops >= upper[planNum].top()) { upper[planNum].push(numTroops); }
         else { lower[planNum].push(numTroops); }
@@ -194,6 +207,7 @@ private:
         }
     }
 
+    // used to calculate median
     int calcMedian(uint32_t planNum) {
         if(upper[planNum].size() == lower[planNum].size()) {
             return (upper[planNum].top() + lower[planNum].top())/2;
@@ -206,6 +220,7 @@ private:
         }
     }
 
+    // gets command line args, and settings of input file
     void getMode(const int &argc, char *argv[]) {
         opterr = false;
         int choice;
@@ -268,15 +283,13 @@ private:
         std::cout << "Deploying troops...\n";
         planets.resize(numPlans);
         if(modeGen) { generals.resize(numGens); }
-        if(modeMed) { 
-            upper.resize(numPlans);
-            lower.resize(numPlans);
-        }
+        if(modeMed) { upper.resize(numPlans); lower.resize(numPlans); }
         
     } // getMode
     
 public:
     
+    // custom constructor
     Galaxy(const int &argc, char *argv[]) {
         getMode(argc, argv);
     }
@@ -291,7 +304,8 @@ public:
         std::istream &inputStream = !modeDL ? ss : std::cin;
         uint32_t prevTime = 0;
         uint32_t currentTime = 0;
-        while(readInput(inputStream, prevTime)) {
+        Deployment dep;
+        while(readInput(inputStream, prevTime, dep)) {
             if(modeMed && (currentTime != prevTime)) {
                 printMedian(currentTime);
                 currentTime = prevTime; // updates currentTime
@@ -350,6 +364,10 @@ public:
                         }
                         planets[i].jedi.pop();
                         planets[i].sith.pop();
+                    }
+                    if(modeWatch) {
+                        evaluateAmbush(dep);
+                        evaluateAttack(dep);
                     }
                     numBattles++;
                 }
