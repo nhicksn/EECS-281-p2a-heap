@@ -141,7 +141,7 @@ private:
         for(uint32_t i = 0; i < numPlans; i++) {
             if(upper[i].size() > 0 || lower[i].size() > 0) {
                 std::cout << "Median troops lost on planet " << i << " at time " << time 
-                    << " is " << calcMedian(i) << '\n';
+                    << " is " << calcMedian(i) << ".\n";
             }
         }
     }
