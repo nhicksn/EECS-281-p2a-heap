@@ -11,11 +11,16 @@ enum class State { Initial, SeenOne, SeenBoth };
 enum class DepType { Jedi, Sith };
 
 struct movieFight {
-    uint32_t timeStamp1;
-    uint32_t timeStamp2;
-    uint32_t forceDiff;
+    uint32_t jediTime;
+    uint32_t sithTime;
+    uint32_t maybeTime;
+    uint32_t jediForce;
+    uint32_t sithForce;
+    uint32_t maybeForce;
     State status = State::Initial;
-    movieFight() : timeStamp1(UINT32_MAX), timeStamp2(UINT32_MAX), forceDiff(UINT32_MAX) {}
+    movieFight() : jediTime(UINT32_MAX), sithTime(UINT32_MAX), maybeTime(UINT32_MAX),
+                    jediForce(UINT32_MAX), sithForce(UINT32_MAX), maybeForce(UINT32_MAX)
+                    {}
 };
 
 struct General {
@@ -32,7 +37,7 @@ struct Deployment {
     uint32_t quantity;
     Deployment(uint32_t t, uint32_t g, DepType s, uint32_t f, uint32_t q) : 
                 timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
-    Deployment() : timeID(0), genID(0), side(DepType::Jedi), forceSens(0), quantity(0) {}
+    Deployment() : timeID(0), genID(0), side(DepType::Jedi), forceSens(UINT32_MAX), quantity(0) {}
 };
 
 struct compareJedi {

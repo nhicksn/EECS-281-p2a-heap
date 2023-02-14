@@ -187,7 +187,7 @@ private:
         std::cout << "---Movie Watcher---\n";
         for(uint32_t i = 0; i < numPlans; i++) {
             // check if a good ambush was found on this planet
-            if(ambushes[i].timeStamp1 == UINT32_MAX) { 
+            if(ambushes[i].jediTime == UINT32_MAX) { 
                 std::cout << "A movie watcher would not see an interesting ambush on planet " 
                             << i << '\n';
             }
@@ -195,15 +195,16 @@ private:
 
             // if there was, cout best ambush data for that planet
             else {
+                uint32_t forceDiff = ambushes[i].sithForce - ambushes[i].jediForce;
                 std::cout << "A movie watcher would enjoy an ambush on planet " << i << 
-                " with Sith at time " << ambushes[i].timeStamp1 << " and Jedi at time " 
-                            << ambushes[i].timeStamp2 << " with a force difference of " 
-                                                    << ambushes[i].forceDiff << ".\n";
+                " with Sith at time " << ambushes[i].sithTime << " and Jedi at time " 
+                            << ambushes[i].jediTime << " with a force difference of " 
+                                                    << forceDiff << ".\n";
             }
             //
 
             // check if a good attack was found on this planet
-            if(attacks[i].timeStamp1 == UINT32_MAX) {
+            if(attacks[i].jediTime == UINT32_MAX) {
                 std::cout << "A movie watcher would not see an interesting attack on planet " 
                             << i << '\n';
             }
@@ -211,10 +212,11 @@ private:
 
             // if there was, cout best attack data for that planet
             else {
+                uint32_t forceDiff = attacks[i].sithForce - attacks[i].jediForce;
                 std::cout << "A movie watcher would enjoy an attack on planet " << i << 
-                " with Jedi at time " << attacks[i].timeStamp1 << " and Sith at time " 
-                            << attacks[i].timeStamp2 << " with a force difference of " 
-                                                    << attacks[i].forceDiff << ".\n";
+                " with Jedi at time " << attacks[i].jediTime << " and Sith at time " 
+                            << attacks[i].sithTime << " with a force difference of " 
+                                                    << forceDiff << ".\n";
             }
             //
         }
