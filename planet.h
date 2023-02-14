@@ -3,11 +3,20 @@
 #define PLANET_H
 
 #include <queue>
+#include <cstdint>
 #include "p2a-heap.h"
 
 enum class State { Initial, SeenOne, SeenBoth };
 
 enum class DepType { Jedi, Sith };
+
+struct movieFight {
+    uint32_t timeStamp1;
+    uint32_t timeStamp2;
+    uint32_t forceDiff;
+    State status = State::Initial;
+    movieFight() : timeStamp1(UINT32_MAX), timeStamp2(UINT32_MAX), forceDiff(UINT32_MAX) {}
+};
 
 struct General {
     uint32_t totalJedi;

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <queue>
+#include <cstdint>
 #include "planet.h"
 #include "P2random.h"
 
@@ -43,9 +44,9 @@ private:
     std::vector<std::priority_queue<uint32_t, std::vector<uint32_t>, std::less<uint32_t>>> lower;
     //
 
-    // status of movie watcher
-    State ambush = State::Initial;
-    State attack = State::Initial;
+    // vectors containing best attacks and ambushes
+    std::vector<movieFight> ambushes;
+    std::vector<movieFight> attacks;
     //
 
     // to break ties
@@ -140,11 +141,13 @@ private:
     // used by runSim to see if best ambush needs to be updated
     void evaluateAmbush(Deployment &dep) {
         // TODO:
+        dep.quantity++;
     }
 
     // used by runSim to see if best attack needs to be updated
     void evaluateAttack(Deployment &dep) {
         // TODO:
+        dep.quantity++;
     }
 
     // used by runSim if modeMed, prints the median data for the inputted timestamp
@@ -182,12 +185,37 @@ private:
     // used by printSummary if modeWatch is enabled, prints the movie watcher data
     void printWatch() {
         std::cout << "---Movie Watcher---\n";
-        // TODO:
         for(uint32_t i = 0; i < numPlans; i++) {
-            // check if there are any exciting battles, and cout if necessary
+            // check if a good ambush was found on this planet
+            if(ambushes[i].timeStamp1 == UINT32_MAX) { 
+                std::cout << "A movie watcher would not see an interesting ambush on planet " 
+                            << i << '\n';
+            }
             //
-            // find a way to store the most exciting battles, so that you can check 
-            // if the vector is empty, there are no exciting battles
+
+            // if there was, cout best ambush data for that planet
+            else {
+                std::cout << "A movie watcher would enjoy an ambush on planet " << i << 
+                " with Sith at time " << ambushes[i].timeStamp1 << " and Jedi at time " 
+                            << ambushes[i].timeStamp2 << " with a force difference of " 
+                                                    << ambushes[i].forceDiff << ".\n";
+            }
+            //
+
+            // check if a good attack was found on this planet
+            if(attacks[i].timeStamp1 == UINT32_MAX) {
+                std::cout << "A movie watcher would not see an interesting attack on planet " 
+                            << i << '\n';
+            }
+            //
+
+            // if there was, cout best attack data for that planet
+            else {
+                std::cout << "A movie watcher would enjoy an attack on planet " << i << 
+                " with Jedi at time " << attacks[i].timeStamp1 << " and Sith at time " 
+                            << attacks[i].timeStamp2 << " with a force difference of " 
+                                                    << attacks[i].forceDiff << ".\n";
+            }
             //
         }
     }
@@ -284,6 +312,7 @@ private:
         planets.resize(numPlans);
         if(modeGen) { generals.resize(numGens); }
         if(modeMed) { upper.resize(numPlans); lower.resize(numPlans); }
+        if(modeWatch) { ambushes.resize(numPlans); attacks.resize(numPlans); }
         
     } // getMode
     
