@@ -50,13 +50,11 @@ private:
     //
 
     // to break ties
-    uint32_t JediID = 0;
-    uint32_t SithID = 0;
-    //
+    uint32_t timeID = 0;
 
     // designed to be put in a while loop to read input before each round of simulations
     // returns false if no more input
-    bool readInput(std::istream &input, uint32_t &prevTime, Deployment &depOut) {
+    bool readInput(std::istream &input, uint32_t &prevTime, Deployment &depOut, uint32_t &planOut) {
         // read input
         uint32_t timestamp;
         if(!(input >> timestamp)) return false;
@@ -96,7 +94,7 @@ private:
 
         // create troop with given characteristics and push to correct queue
         if(side == DepType::Jedi) { // if Jedi
-            Deployment dep(JediID++, numGen, side, numForce, numTroops);
+            Deployment dep(timeID++, timestamp, numGen, side, numForce, numTroops);
             planets[numPlan].jedi.push(dep);
             depOut = dep;
             if(modeGen) { 
@@ -105,7 +103,7 @@ private:
             }
         }
         else { // if Sith
-            Deployment dep(SithID++, numGen, side, numForce, numTroops);
+            Deployment dep(timeID++, timestamp, numGen, side, numForce, numTroops);
             planets[numPlan].sith.push(dep);
             depOut = dep;
             if(modeGen) {
@@ -114,7 +112,7 @@ private:
             }
         }
         // create troop with given characteristics and push to correct queue
-
+        planOut = numPlan;
         prevTime = timestamp;
         return true;
     }
@@ -139,15 +137,87 @@ private:
     }
 
     // used by runSim to see if best ambush needs to be updated
-    void evaluateAmbush(Deployment &dep) {
-        // TODO:
-        dep.quantity++;
+    void evaluateAmbush(Deployment &dep, uint32_t plan) {
+        if(ambushes[plan].status == State::Initial) {
+            if(dep.side == DepType::Sith) {
+                ambushes[plan].status = State::SeenOne;
+                ambushes[plan].sithForce = dep.forceSens;
+                ambushes[plan].sithTime = dep.timeStamp;
+            }
+        }
+        else if(ambushes[plan].status == State::SeenOne) {
+            if(dep.side == DepType::Sith && dep.forceSens > ambushes[plan].sithForce) {
+                ambushes[plan].sithForce = dep.forceSens;
+                ambushes[plan].sithTime = dep.timeStamp;
+            }
+            else if(dep.side == DepType::Jedi && dep.forceSens <= ambushes[plan].sithForce) {
+                ambushes[plan].status = State::SeenBoth;
+                ambushes[plan].jediForce = dep.forceSens;
+                ambushes[plan].jediTime = dep.timeStamp;
+            }
+        }
+        else if(ambushes[plan].status == State::SeenBoth) {
+            if(dep.side == DepType::Sith && dep.forceSens > ambushes[plan].sithForce) {
+                ambushes[plan].maybeForce = dep.forceSens;
+                ambushes[plan].maybeTime = dep.timeStamp;
+            }
+            else if(dep.side == DepType::Jedi) {
+                if(ambushes[plan].maybeForce != UINT32_MAX && dep.forceSens < ambushes[plan].maybeForce) {
+                    if(ambushes[plan].maybeForce - dep.forceSens > ambushes[plan].sithForce - ambushes[plan].jediForce) {
+                        ambushes[plan].sithForce = ambushes[plan].maybeForce;
+                        ambushes[plan].sithTime = ambushes[plan].maybeTime;
+                        ambushes[plan].jediForce = dep.forceSens;
+                        ambushes[plan].jediTime = dep.timeStamp;
+                    }
+                }
+                else if(ambushes[plan].jediForce > dep.forceSens) {
+                    ambushes[plan].jediForce = dep.forceSens;
+                    ambushes[plan].jediTime = dep.timeStamp;
+                }
+            }
+        }
     }
 
     // used by runSim to see if best attack needs to be updated
-    void evaluateAttack(Deployment &dep) {
-        // TODO:
-        dep.quantity++;
+    void evaluateAttack(Deployment &dep, uint32_t plan) {
+        if(attacks[plan].status == State::Initial) {
+            if(dep.side == DepType::Jedi) {
+                attacks[plan].status = State::SeenOne;
+                attacks[plan].jediForce = dep.forceSens;
+                attacks[plan].jediTime = dep.timeStamp;
+            }
+        }
+        else if(attacks[plan].status == State::SeenOne) {
+            if(dep.side == DepType::Jedi && dep.forceSens < attacks[plan].jediForce) {
+                attacks[plan].jediForce = dep.forceSens;
+                attacks[plan].jediTime = dep.timeStamp;
+            }
+            else if(dep.side == DepType::Sith && dep.forceSens >= attacks[plan].jediForce) {
+                attacks[plan].status = State::SeenBoth;
+                attacks[plan].sithForce = dep.forceSens;
+                attacks[plan].sithTime = dep.timeStamp;
+            }
+        }
+        else if(attacks[plan].status == State::SeenBoth) {
+            if(dep.side == DepType::Jedi && dep.forceSens < attacks[plan].jediForce) {
+                attacks[plan].maybeForce = dep.forceSens;
+                attacks[plan].maybeTime = dep.timeStamp;
+            }
+            else if(dep.side == DepType::Sith) {
+                if(attacks[plan].maybeForce != UINT32_MAX && dep.forceSens > attacks[plan].maybeForce) {
+                    if(attacks[plan].maybeForce - dep.forceSens > attacks[plan].sithForce - attacks[plan].jediForce) {
+                        attacks[plan].jediForce = ambushes[plan].maybeForce;
+                        attacks[plan].jediTime = ambushes[plan].maybeTime;
+                        attacks[plan].sithForce = dep.forceSens;
+                        attacks[plan].sithTime = dep.timeStamp;
+                    }
+                }
+                else if(attacks[plan].sithForce < dep.forceSens) {
+                    attacks[plan].sithForce = dep.forceSens;
+                    attacks[plan].sithTime = dep.timeStamp;
+                }
+            }
+        }
     }
 
     // used by runSim if modeMed, prints the median data for the inputted timestamp
@@ -187,9 +257,9 @@ private:
         std::cout << "---Movie Watcher---\n";
         for(uint32_t i = 0; i < numPlans; i++) {
             // check if a good ambush was found on this planet
-            if(ambushes[i].jediTime == UINT32_MAX) { 
+            if(ambushes[i].status != State::SeenBoth) { 
                 std::cout << "A movie watcher would not see an interesting ambush on planet " 
-                            << i << '\n';
+                            << i << ".\n";
             }
             //
 
@@ -204,7 +274,7 @@ private:
             //
 
             // check if a good attack was found on this planet
-            if(attacks[i].jediTime == UINT32_MAX) {
+            if(attacks[i].status != State::SeenBoth) {
                 std::cout << "A movie watcher would not see an interesting attack on planet " 
                             << i << '\n';
             }
@@ -336,7 +406,8 @@ public:
         uint32_t prevTime = 0;
         uint32_t currentTime = 0;
         Deployment dep;
-        while(readInput(inputStream, prevTime, dep)) {
+        uint32_t plan;
+        while(readInput(inputStream, prevTime, dep, plan)) {
             if(modeMed && (currentTime != prevTime)) {
                 printMedian(currentTime);
                 currentTime = prevTime; // updates currentTime
@@ -396,12 +467,12 @@ public:
                         planets[i].jedi.pop();
                         planets[i].sith.pop();
                     }
-                    if(modeWatch) {
-                        evaluateAmbush(dep);
-                        evaluateAttack(dep);
-                    }
                     numBattles++;
                 }
+            }
+            if(modeWatch) {
+                evaluateAmbush(dep, plan);
+                evaluateAttack(dep, plan);
             }
         }
         if(modeMed) {

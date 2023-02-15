@@ -14,9 +14,9 @@ struct movieFight {
     uint32_t jediTime;
     uint32_t sithTime;
     uint32_t maybeTime;
-    uint32_t jediForce;
-    uint32_t sithForce;
-    uint32_t maybeForce;
+    uint32_t jediForce = UINT32_MAX;
+    uint32_t sithForce = 0;
+    uint32_t maybeForce = UINT32_MAX;
     State status = State::Initial;
     movieFight() : jediTime(UINT32_MAX), sithTime(UINT32_MAX), maybeTime(UINT32_MAX),
                     jediForce(UINT32_MAX), sithForce(UINT32_MAX), maybeForce(UINT32_MAX)
@@ -31,13 +31,14 @@ struct General {
 
 struct Deployment {
     uint32_t timeID;
+    uint32_t timeStamp;
     uint32_t genID;
     DepType side;
     uint32_t forceSens;
     uint32_t quantity;
-    Deployment(uint32_t t, uint32_t g, DepType s, uint32_t f, uint32_t q) : 
-                timeID(t), genID(g), side(s), forceSens(f), quantity(q) {}
-    Deployment() : timeID(0), genID(0), side(DepType::Jedi), forceSens(UINT32_MAX), quantity(0) {}
+    Deployment(uint32_t t, uint32_t t2, uint32_t g, DepType s, uint32_t f, uint32_t q) : 
+                timeID(t), timeStamp(t2), genID(g), side(s), forceSens(f), quantity(q) {}
+    Deployment() : timeID(0), timeStamp(0), genID(0), side(DepType::Jedi), forceSens(UINT32_MAX), quantity(0) {}
 };
 
 struct compareJedi {
