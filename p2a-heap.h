@@ -276,7 +276,7 @@ private:
             // check if a good attack was found on this planet
             if(attacks[i].status != State::SeenBoth) {
                 std::cout << "A movie watcher would not see an interesting attack on planet " 
-                            << i << '\n';
+                            << i << "\n";
             }
             //
 
