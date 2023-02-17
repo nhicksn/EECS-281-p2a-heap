@@ -18,9 +18,8 @@ struct movieFight {
     uint32_t sithForce = 0;
     uint32_t maybeForce = UINT32_MAX;
     State status = State::Initial;
-    movieFight() : jediTime(UINT32_MAX), sithTime(UINT32_MAX), maybeTime(UINT32_MAX),
-                    jediForce(UINT32_MAX), sithForce(UINT32_MAX), maybeForce(UINT32_MAX)
-                    {}
+    movieFight() : jediTime(0), sithTime(0), maybeTime(0), jediForce(UINT32_MAX), 
+                    sithForce(0), maybeForce(0) {}
 };
 
 struct General {

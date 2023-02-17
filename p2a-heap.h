@@ -138,12 +138,10 @@ private:
 
     // used by runSim to see if best ambush needs to be updated
     void evaluateAmbush(Deployment &dep, uint32_t plan) {
-        if(ambushes[plan].status == State::Initial) {
-            if(dep.side == DepType::Sith) {
-                ambushes[plan].status = State::SeenOne;
-                ambushes[plan].sithForce = dep.forceSens;
-                ambushes[plan].sithTime = dep.timeStamp;
-            }
+        if(ambushes[plan].status == State::Initial && dep.side == DepType::Sith) {
+            ambushes[plan].status = State::SeenOne;
+            ambushes[plan].sithForce = dep.forceSens;
+            ambushes[plan].sithTime = dep.timeStamp;
         }
         else if(ambushes[plan].status == State::SeenOne) {
             if(dep.side == DepType::Sith && dep.forceSens > ambushes[plan].sithForce) {
@@ -157,20 +155,20 @@ private:
             }
         }
         else if(ambushes[plan].status == State::SeenBoth) {
-            if(dep.side == DepType::Sith && dep.forceSens > ambushes[plan].sithForce) {
+            if(dep.side == DepType::Sith && dep.forceSens > ambushes[plan].sithForce && dep.forceSens > ambushes[plan].maybeForce) {
                 ambushes[plan].maybeForce = dep.forceSens;
                 ambushes[plan].maybeTime = dep.timeStamp;
             }
             else if(dep.side == DepType::Jedi) {
-                if(ambushes[plan].maybeForce != UINT32_MAX && dep.forceSens < ambushes[plan].maybeForce) {
-                    if(ambushes[plan].maybeForce - dep.forceSens > ambushes[plan].sithForce - ambushes[plan].jediForce) {
+                if(ambushes[plan].maybeForce != 0 && dep.forceSens <= ambushes[plan].maybeForce) {
+                    if((ambushes[plan].maybeForce - dep.forceSens) > (ambushes[plan].sithForce - ambushes[plan].jediForce)) {
                         ambushes[plan].sithForce = ambushes[plan].maybeForce;
                         ambushes[plan].sithTime = ambushes[plan].maybeTime;
                         ambushes[plan].jediForce = dep.forceSens;
                         ambushes[plan].jediTime = dep.timeStamp;
                     }
                 }
-                else if(ambushes[plan].jediForce > dep.forceSens) {
+                else if(dep.forceSens < ambushes[plan].jediForce) {
                     ambushes[plan].jediForce = dep.forceSens;
                     ambushes[plan].jediTime = dep.timeStamp;
                 }
@@ -180,12 +178,10 @@ private:
 
     // used by runSim to see if best attack needs to be updated
     void evaluateAttack(Deployment &dep, uint32_t plan) {
-        if(attacks[plan].status == State::Initial) {
-            if(dep.side == DepType::Jedi) {
-                attacks[plan].status = State::SeenOne;
-                attacks[plan].jediForce = dep.forceSens;
-                attacks[plan].jediTime = dep.timeStamp;
-            }
+        if(attacks[plan].status == State::Initial && dep.side == DepType::Jedi) {
+            attacks[plan].status = State::SeenOne;
+            attacks[plan].jediForce = dep.forceSens;
+            attacks[plan].jediTime = dep.timeStamp;
         }
         else if(attacks[plan].status == State::SeenOne) {
             if(dep.side == DepType::Jedi && dep.forceSens < attacks[plan].jediForce) {
@@ -199,20 +195,20 @@ private:
             }
         }
         else if(attacks[plan].status == State::SeenBoth) {
-            if(dep.side == DepType::Jedi && dep.forceSens < attacks[plan].jediForce) {
+            if(dep.side == DepType::Jedi && dep.forceSens < attacks[plan].jediForce && (attacks[plan].maybeForce == 0 || dep.forceSens < attacks[plan].maybeForce)) {
                 attacks[plan].maybeForce = dep.forceSens;
                 attacks[plan].maybeTime = dep.timeStamp;
             }
             else if(dep.side == DepType::Sith) {
-                if(attacks[plan].maybeForce != UINT32_MAX && dep.forceSens > attacks[plan].maybeForce) {
-                    if(attacks[plan].maybeForce - dep.forceSens > attacks[plan].sithForce - attacks[plan].jediForce) {
-                        attacks[plan].jediForce = ambushes[plan].maybeForce;
-                        attacks[plan].jediTime = ambushes[plan].maybeTime;
+                if(attacks[plan].maybeForce != 0 && dep.forceSens >= attacks[plan].maybeForce) {
+                    if((dep.forceSens - attacks[plan].maybeForce) > (attacks[plan].sithForce - attacks[plan].jediForce)) {
+                        attacks[plan].jediForce = attacks[plan].maybeForce;
+                        attacks[plan].jediTime = attacks[plan].maybeTime;
                         attacks[plan].sithForce = dep.forceSens;
                         attacks[plan].sithTime = dep.timeStamp;
                     }
                 }
-                else if(attacks[plan].sithForce < dep.forceSens) {
+                else if(dep.forceSens > attacks[plan].sithForce) {
                     attacks[plan].sithForce = dep.forceSens;
                     attacks[plan].sithTime = dep.timeStamp;
                 }
@@ -276,7 +272,7 @@ private:
             // check if a good attack was found on this planet
             if(attacks[i].status != State::SeenBoth) {
                 std::cout << "A movie watcher would not see an interesting attack on planet " 
-                            << i << "\n";
+                            << i << ".\n";
             }
             //
 
