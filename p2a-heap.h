@@ -72,9 +72,9 @@ private:
             std::cerr << "negative planet or general number given\n";
             exit(1);
         }
-        uint32_t numPlan = static_cast<uint32_t>(intNumPlan);
+        planOut = static_cast<uint32_t>(intNumPlan);
         uint32_t numGen = static_cast<uint32_t>(intNumGen);
-        if(numPlan >= numPlans) {
+        if(planOut >= numPlans) {
             std::cerr << "invalid planet number\n";
             exit(1);
         }
@@ -92,27 +92,24 @@ private:
         }
         // check that input is possible
 
+        depOut.timeID = timeID++; depOut.timeStamp = timestamp; depOut.genID = numGen;
+        depOut.side = side; depOut.forceSens = numForce; depOut.quantity = numTroops;
         // create troop with given characteristics and push to correct queue
         if(side == DepType::Jedi) { // if Jedi
-            Deployment dep(timeID++, timestamp, numGen, side, numForce, numTroops);
-            planets[numPlan].jedi.push(dep);
-            depOut = dep;
+            planets[planOut].jedi.push(depOut);
             if(modeGen) { 
                 generals[numGen].totalJedi += numTroops;
                 generals[numGen].totalAlive += numTroops;
             }
         }
         else { // if Sith
-            Deployment dep(timeID++, timestamp, numGen, side, numForce, numTroops);
-            planets[numPlan].sith.push(dep);
-            depOut = dep;
+            planets[planOut].sith.push(depOut);
             if(modeGen) {
                 generals[numGen].totalSith += numTroops;
                 generals[numGen].totalAlive += numTroops;
             }
         }
-        // create troop with given characteristics and push to correct queue
-        planOut = numPlan;
+
         prevTime = timestamp;
         return true;
     }
